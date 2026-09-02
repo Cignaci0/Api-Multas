@@ -22,11 +22,12 @@ public class Usuario {
 
     private String username;
     private String password;
-    private String email;
     private Integer codigo_recuperacion;
     private Boolean estado = true;
     private LocalDateTime fecha_exp_codigo;
     private Boolean es_inspector = false;
+    private String comuna;
+    private String email;
 
     @ManyToOne
     @JoinColumn(name = "id_perfil", nullable = true)

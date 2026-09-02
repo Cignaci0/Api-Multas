@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Setter
 public class ObtenerMultasDto {
 
+    private Integer id;
     private LocalDateTime fecha_creacion;
     private String ubicacion;
     private String foto1;
@@ -16,5 +17,7 @@ public class ObtenerMultasDto {
     private String foto3;
     private String patente;
     private String tipo_multa;
+    private String direccion;
+    private Integer idTipoMulta;
 
 }

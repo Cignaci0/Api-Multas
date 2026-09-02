@@ -3,8 +3,8 @@ package Usuario;
 
 import Inspector.DTO.CrearInspectorDto;
 import Inspector.Inspector;
-import Municipio.Municipio;
 import Perfil.Perfil;
+import io.quarkus.panache.common.Page;
 import io.smallrye.jwt.build.Jwt;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -13,23 +13,18 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import org.mindrot.jbcrypt.BCrypt;
-import Municipio.MunicipioRepository;
 import Perfil.PerfilRepository;
 import Inspector.InspectorRepository;
+import Usuario.DTO.ObtenerUsuariosDto;
 
 import java.time.Duration;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @ApplicationScoped
 public class UsuarioServices {
     @Inject
     UsuarioRepository usuarioRepository;
 
-    @Inject
-    MunicipioRepository municipioRepository;
 
     @Inject
     PerfilRepository perfilRepository;
@@ -47,6 +42,10 @@ public class UsuarioServices {
         String PasswordActual = nuevoUsuario.getPassword();
         String PasswordEncriptada = BCrypt.hashpw(PasswordActual, BCrypt.gensalt(10));
         nuevoUsuario.setPassword(PasswordEncriptada);
+        if(nuevoUsuario.getPerfil() != null){
+            Perfil perfil = this.perfilRepository.findByIdOptional(nuevoUsuario.getPerfil().getId()).orElseThrow(() -> new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "Perfil no econtrado")).build()));
+        }
+
         this.usuarioRepository.persist(nuevoUsuario);
         return Map.of("message", "ususario creado correctamente");
     }
@@ -56,9 +55,13 @@ public class UsuarioServices {
         if(usuario.getEs_inspector() == true){
             throw new BadRequestException(Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "No se puede acceder a la pagina web con su perfil")).build());
         }
+
         boolean passwordMatch = BCrypt.checkpw(password, usuario.getPassword());
         if(!passwordMatch){
             throw new BadRequestException(Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "Usuario o contraseña incorrectos")).build());
+        }
+        if(usuario.getEstado() == false){
+            throw new BadRequestException(Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "No se puede acceder a la pagina, cuenta desactivada")).build());
         }
 
         String token = Jwt.issuer("https://multas.com/issuer")
@@ -76,6 +79,9 @@ public class UsuarioServices {
         Usuario usuario = this.usuarioRepository.find("username", username).firstResultOptional().orElseThrow(() -> new BadRequestException(Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "Usuario o contraseña incorrectos")).build()));
         if(usuario.getEs_inspector() == false){
             throw new BadRequestException(Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "No se puede acceder a la pagina web con su perfil")).build());
+        }
+        if(usuario.getEstado() == false){
+            throw new BadRequestException(Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "No se puede acceder a la pagina, cuenta desactivada")).build());
         }
         boolean passwordMatch = BCrypt.checkpw(password, usuario.getPassword());
         if(!passwordMatch){
@@ -95,14 +101,15 @@ public class UsuarioServices {
 
     @Transactional
     public Map<String, String> crearInspector(CrearInspectorDto datosInspector){
-        Municipio municipio = this.municipioRepository.findByIdOptional(datosInspector.getId_municipio()).orElseThrow(() -> new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "No se encontro el municipio con id: " + datosInspector.getId_municipio())).build()));
         Perfil perfil = this.perfilRepository.findByIdOptional(3).orElseThrow(() -> new NotFoundException("No se encontró el perfil de inspector"));
         String passwordEncriptada = BCrypt.hashpw(datosInspector.getPassword(), BCrypt.gensalt(10));
         Usuario nuevoUsuario = new Usuario();
         nuevoUsuario.setUsername(datosInspector.getUsername());
         nuevoUsuario.setPassword(passwordEncriptada);
         nuevoUsuario.setEs_inspector(true);
+        nuevoUsuario.setComuna(datosInspector.getComuna());
         nuevoUsuario.setPerfil(perfil);
+        nuevoUsuario.setEmail(datosInspector.getEmail());
         Optional<Usuario> existeUsername = this.usuarioRepository.find("username", nuevoUsuario.getUsername()).firstResultOptional();
         if(existeUsername.isPresent()){
             throw new BadRequestException(Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "Ya existe el usuario con el username: " + nuevoUsuario.getUsername())).build());
@@ -112,11 +119,33 @@ public class UsuarioServices {
         Inspector nuevoInspector = new Inspector();
         nuevoInspector.setNombre(datosInspector.getNombre());
         nuevoInspector.setApellido(datosInspector.getApellido());
-        nuevoInspector.setMunicipio(municipio);
+        nuevoInspector.setComuna(datosInspector.getComuna());
+        nuevoInspector.setEmail(datosInspector.getEmail());
         nuevoInspector.setUsuario(nuevoUsuario);
+
         this.inspectorRepository.persist(nuevoInspector);
 
         return Map.of("message", "Inspector creado correctamente");
     }
+
+    public List<ObtenerUsuariosDto> obtenerUsuariosDtos(int pagina, int tamano){
+        List<Usuario> usuarios = this.usuarioRepository.findAll().page(Page.of(pagina,tamano)).list();
+        return usuarios.stream().map( u -> {
+            ObtenerUsuariosDto obUsu = new ObtenerUsuariosDto();
+            obUsu.setUsername(u.getUsername());
+            obUsu.setComuna(u.getComuna());
+            obUsu.setId(u.getId());
+            obUsu.setEmail(u.getEmail());
+            if(u.getPerfil() != null){
+                Perfil perfil = this.perfilRepository.findByIdOptional(u.getPerfil().getId()).orElseThrow(() -> new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "Perfil no encontrado")).build()));
+                obUsu.setIdPerfil(u.getPerfil().getId());
+                obUsu.setNombrePerfil(u.getPerfil().getNombre());
+            }
+            obUsu.setEstado(u.getEstado());
+            obUsu.setEs_inspector(u.getEs_inspector());
+            return obUsu;
+        }).toList();
+    }
+
 
 }

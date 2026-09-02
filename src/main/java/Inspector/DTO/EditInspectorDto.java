@@ -3,14 +3,13 @@ package Inspector.DTO;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
-public class CrearInspectorDto {
-    private String username;
-    private String password;
+public class EditInspectorDto {
+    private String email;
     private String nombre;
     private String apellido;
     private String comuna;
-    private String email;
 }

@@ -9,8 +9,8 @@ public class ObtenerInspectorDto {
     public Integer id;
     public String nombre;
     public String apeliido;
-    public Integer idMunicipio;
-    public String nombreMunicipio;
+    public String comuna;
     public Integer idUsuario;
     public String usernameUsuario;
+    public String email;
 }

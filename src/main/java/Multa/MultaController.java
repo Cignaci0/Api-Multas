@@ -2,6 +2,7 @@ package Multa;
 
 
 import Multa.DTO.CrearMultaDto;
+import Multa.DTO.EditMultasDto;
 import Multa.DTO.ObtenerMultasDto;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -27,6 +28,15 @@ public class MultaController {
         Map<String, String> respuesta = multaServices.crearMulta(multaBody);
         return Response.status(Response.Status.CREATED).entity(respuesta).build();
     }
+
+    @PATCH
+    @RolesAllowed({"SUPERADMIN", "ADMIN"})
+    @Path("/edit/{idMulta}")
+    public Response editarMulta(@PathParam("idMulta") Integer idMulta, EditMultasDto editm) {
+        Map<String, String> respuesta = multaServices.ediatMulta(idMulta, editm);
+        return Response.status(Response.Status.OK).entity(respuesta).build();
+    }
+
 
     @GET
     @RolesAllowed({"SUPERADMIN", "ADMIN", "EMPLEADO"})

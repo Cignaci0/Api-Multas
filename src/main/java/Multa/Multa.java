@@ -20,13 +20,14 @@ public class Multa {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-
     private LocalDateTime fecha_creacion;
     private String ubicacion;
     private String foto1;
     private String foto2;
     private String foto3;
     private String patente;
+    private String direccion;
+    private String comuna;
 
     @ManyToOne
     @JoinColumn(name = "id_usuario_creador", nullable = false)

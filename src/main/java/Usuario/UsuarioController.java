@@ -2,15 +2,14 @@ package Usuario;
 
 
 import Inspector.DTO.CrearInspectorDto;
+import Usuario.DTO.ObtenerUsuariosDto;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.util.List;
 import java.util.Map;
 
 @Path("/usuario")
@@ -21,6 +20,14 @@ public class UsuarioController {
     @Inject
     UsuarioServices usuarioServices;
 
+
+    @GET
+    public Response obtenerUsuarios(
+            @QueryParam("pagina") @DefaultValue("0") int pagina,
+            @QueryParam("tamanio") @DefaultValue("10") int tamanio){
+        List<ObtenerUsuariosDto> respuesta = usuarioServices.obtenerUsuariosDtos(pagina,tamanio);
+        return Response.ok(respuesta).build();
+    }
 
     @POST
     @RolesAllowed({"SUPERADMIN"})
@@ -50,4 +57,6 @@ public class UsuarioController {
         Map<String, String> respuesta = usuarioServices.crearInspector(inspectorBody);
         return Response.status(Response.Status.CREATED).entity(respuesta).build();
     }
+
+
 }

@@ -1,8 +1,7 @@
 package Inspector;
 
 
-import Usuario.DTO.EditUsuarioDTO;
-import Usuario.Usuario;
+import Inspector.DTO.EditInspectorDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
@@ -12,4 +11,5 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
 )
 public interface InspectorMapper {
+    void editInspector(EditInspectorDto origen,@MappingTarget Inspector destino);
 }
