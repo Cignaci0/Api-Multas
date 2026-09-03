@@ -28,6 +28,8 @@ public class Multa {
     private String patente;
     private String direccion;
     private String comuna;
+    private Boolean estado = true;
+    private String descripcion_desactivada;
 
     @ManyToOne
     @JoinColumn(name = "id_usuario_creador", nullable = false)

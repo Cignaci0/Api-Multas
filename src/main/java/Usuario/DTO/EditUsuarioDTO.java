@@ -11,4 +11,8 @@ import java.time.LocalDateTime;
 public class EditUsuarioDTO {
     private String email;
     private Boolean estado;
+    private String username;
+    private Integer perfil;
+    private Boolean es_inspector;
+    private String comuna;
 }

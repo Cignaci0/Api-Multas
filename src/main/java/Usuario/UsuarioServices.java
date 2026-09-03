@@ -4,6 +4,7 @@ package Usuario;
 import Inspector.DTO.CrearInspectorDto;
 import Inspector.Inspector;
 import Perfil.Perfil;
+import Usuario.DTO.EditUsuarioDTO;
 import io.quarkus.panache.common.Page;
 import io.smallrye.jwt.build.Jwt;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -31,6 +32,9 @@ public class UsuarioServices {
 
     @Inject
     InspectorRepository inspectorRepository;
+
+    @Inject
+    UsuarioMapper usuarioMapper;
 
 
     @Transactional
@@ -69,6 +73,7 @@ public class UsuarioServices {
                 .subject(usuario.getUsername())
                 .claim("id_perfil",usuario.getPerfil().getId())
                 .claim("id", usuario.getId())
+                .claim("comuna", usuario.getComuna())
                 .groups(new HashSet<>(Set.of(usuario.getPerfil().getNombre())))
                 .expiresIn(Duration.ofMinutes(15))
                 .sign();
@@ -93,6 +98,7 @@ public class UsuarioServices {
                 .subject(usuario.getUsername())
                 .claim("id_perfil",usuario.getPerfil().getId())
                 .claim("id", usuario.getId())
+                .claim("comuna", usuario.getComuna())
                 .groups(new HashSet<>(Set.of(usuario.getPerfil().getNombre())))
                 .expiresIn(Duration.ofHours(24))
                 .sign();
@@ -147,5 +153,16 @@ public class UsuarioServices {
         }).toList();
     }
 
+    @Transactional
+    public Map<String, String> editUsuario (Integer idUsuario, EditUsuarioDTO editUsuarioDTO){
+        Usuario usuario = this.usuarioRepository.findByIdOptional(idUsuario).orElseThrow(() -> new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "Usuario no encontrado")).build()));
+        if(editUsuarioDTO.getPerfil() != null){
+            Perfil perfil = this.perfilRepository.findByIdOptional(editUsuarioDTO.getPerfil()).orElseThrow(() -> new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "Perfil no encontrado")).build()));
+            usuario.setPerfil(perfil);
+        }
+        usuarioMapper.editarUsuario(editUsuarioDTO, usuario);
+        this.usuarioRepository.persist(usuario);
+        return Map.of("message", "Usuario editado con exito");
+    }
 
 }

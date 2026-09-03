@@ -11,6 +11,7 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import Usuario.UsuarioRepository;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.util.List;
 import java.util.Map;
@@ -22,13 +23,29 @@ public class InspectorServices {
     InspectorRepository inspectorRepository;
 
     @Inject
+    JsonWebToken jwt;
+
+    @Inject
     InspectorMapper inspectorMapper;
 
     @Inject
     UsuarioRepository usuarioRepository;
 
     public List<ObtenerInspectorDto> obtenerInspectores(int pagina, int tamanio){
-        List<Inspector> inspectores = this.inspectorRepository.findAll().page(Page.of(pagina,tamanio)).list();
+
+        Object rawComuna = jwt.getClaim("comuna");
+        String comuna = rawComuna != null ? rawComuna.toString() : null;
+
+        Object rawId = jwt.getClaim("id_perfil");
+        Integer perfilId = rawId != null ? Integer.valueOf(rawId.toString()) : null;
+
+        List<Inspector> inspectores;
+
+        if (perfilId != 2) {
+            inspectores =  this.inspectorRepository.find("comuna = ?1", comuna).page(Page.of(pagina,tamanio)).list();
+        } else {
+            inspectores =  this.inspectorRepository.findAll().page(Page.of(pagina,tamanio)).list();
+        }
             return inspectores.stream().map(i -> {
                 ObtenerInspectorDto obIns = new ObtenerInspectorDto();
                 obIns.setId(i.getId());

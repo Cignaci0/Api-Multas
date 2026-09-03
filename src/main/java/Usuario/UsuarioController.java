@@ -2,6 +2,7 @@ package Usuario;
 
 
 import Inspector.DTO.CrearInspectorDto;
+import Usuario.DTO.EditUsuarioDTO;
 import Usuario.DTO.ObtenerUsuariosDto;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -22,12 +23,22 @@ public class UsuarioController {
 
 
     @GET
+    @RolesAllowed({"SUPERADMIN"})
     public Response obtenerUsuarios(
             @QueryParam("pagina") @DefaultValue("0") int pagina,
             @QueryParam("tamanio") @DefaultValue("10") int tamanio){
         List<ObtenerUsuariosDto> respuesta = usuarioServices.obtenerUsuariosDtos(pagina,tamanio);
         return Response.ok(respuesta).build();
     }
+
+    @PATCH
+    @RolesAllowed({"SUPERADMIN"})
+    @Path("/{idUsuario}")
+    public Response editUsuario(@PathParam("idUsuario") Integer idUsuario, EditUsuarioDTO editUs){
+        Map<String, String> respuesta = usuarioServices.editUsuario(idUsuario, editUs);
+        return Response.status(Response.Status.OK).entity(respuesta).build();
+    }
+
 
     @POST
     @RolesAllowed({"SUPERADMIN"})

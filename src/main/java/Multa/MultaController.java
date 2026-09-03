@@ -1,6 +1,7 @@
 package Multa;
 
 
+import Multa.DTO.BorrasMultaDto;
 import Multa.DTO.CrearMultaDto;
 import Multa.DTO.EditMultasDto;
 import Multa.DTO.ObtenerMultasDto;
@@ -27,6 +28,13 @@ public class MultaController {
     public Response crearMulta(CrearMultaDto multaBody) {
         Map<String, String> respuesta = multaServices.crearMulta(multaBody);
         return Response.status(Response.Status.CREATED).entity(respuesta).build();
+    }
+
+    @PATCH
+    @Path("/borrar/{idMulta}")
+    public Response borrarMulta(@PathParam("idMulta") Integer idMulta, BorrasMultaDto borrasMultaDto) {
+        Map<String, String> respuesta = multaServices.borrarMulta(idMulta, borrasMultaDto);
+        return Response.status(Response.Status.OK).entity(respuesta).build();
     }
 
     @PATCH
