@@ -18,7 +18,6 @@ public class Tipo_multa {
     private Integer id;
 
     private String nombre;
-    private Integer modulo_padre;
 
     @OneToMany(mappedBy = "tipoMulta", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Multa> multas;

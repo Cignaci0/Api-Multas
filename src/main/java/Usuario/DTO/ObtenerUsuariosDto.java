@@ -16,4 +16,5 @@ public class ObtenerUsuariosDto {
     private String nombrePerfil;
     private String email;
 
+
 }

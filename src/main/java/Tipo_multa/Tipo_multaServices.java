@@ -1,11 +1,12 @@
 package Tipo_multa;
 
-import Tipo_multa.DTO.ObtenerHijosMenuDto;
-import Tipo_multa.DTO.ObtenerMenuTipoMultasDto;
+import Tipo_multa.DTO.ObtenerTipoMultas;
+import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.core.Response;
 
 import java.util.List;
@@ -17,29 +18,12 @@ public class Tipo_multaServices {
     @Inject
     Tipo_multaRepository tipoMultaRepository;
 
-    @Transactional
-    public Map<String, String> crearTipoMulta(Tipo_multa tipoMulta){
-       if(tipoMulta.getModulo_padre() != null){
-           Tipo_multa tipoMultaExiste = this.tipoMultaRepository.findByIdOptional(tipoMulta.getModulo_padre()).orElseThrow(() -> new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "No existe el tipo de multa con id: " +  tipoMulta.getModulo_padre())).build()));
-           this.tipoMultaRepository.persist(tipoMultaExiste);
-       }
-       this.tipoMultaRepository.persist(tipoMulta);
-       return Map.of("message", "Tipo de multa creada con exito");
-    }
-
-    public List<ObtenerMenuTipoMultasDto> traerMenu() {
-        List<Tipo_multa> todasLasMultas = tipoMultaRepository.listAll();
-
-        List<Tipo_multa> padres = todasLasMultas.stream()
-                .filter(t -> t.getModulo_padre() == null)
-                .toList();
-
-        return padres.stream().map(padre -> {
-            List<ObtenerHijosMenuDto> hijos = todasLasMultas.stream().filter(t -> padre.getId().equals(t.getModulo_padre())).map(t -> new ObtenerHijosMenuDto(t.getId(), t.getNombre())).toList();
-            ObtenerMenuTipoMultasDto obtenerMenuTipoMultasDto = new ObtenerMenuTipoMultasDto();
-            obtenerMenuTipoMultasDto.setPadre(padre.getNombre());
-            obtenerMenuTipoMultasDto.setHijos(hijos);
-            return obtenerMenuTipoMultasDto;
+    public List<ObtenerTipoMultas> obtenerTipoMulta(String query, int pagina, int tamanio ){
+        return this.tipoMultaRepository.find("Lower(nombre) like ?1", "%" + query.toLowerCase() + "%").stream().map(t -> {
+            ObtenerTipoMultas obt = new ObtenerTipoMultas();
+            obt.setId(t.getId());
+            obt.setNombre(t.getNombre());
+            return  obt;
         }).toList();
     }
 

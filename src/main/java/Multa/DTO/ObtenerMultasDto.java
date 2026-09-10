@@ -19,5 +19,6 @@ public class ObtenerMultasDto {
     private String tipo_multa;
     private String direccion;
     private Integer idTipoMulta;
+    private String motivoEliminacion;
 
 }

@@ -68,7 +68,7 @@ public class MultaServices {
         return Map.of("message", "Multa creada con exito");
     }
 
-    public List<ObtenerMultasDto> traeMultas(int pagina, int tamano){
+    private List<ObtenerMultasDto> obtenerMultasPorEstado(int pagina, int tamano, Boolean estado){
         Object rawComuna = jwt.getClaim("comuna");
         String comuna = rawComuna != null ? rawComuna.toString() : null;
 
@@ -77,9 +77,9 @@ public class MultaServices {
 
         List<Multa> multas;
         if (perfilId != 2) {
-            multas = this.multaRepository.find("comuna = ?1 and estado = ?2", comuna, true).page(Page.of(pagina, tamano)).list();
+            multas = this.multaRepository.find("comuna = ?1 and estado = ?2", comuna, estado).page(Page.of(pagina, tamano)).list();
         } else {
-            multas = this.multaRepository.find("estado = ?1", true).page(Page.of(pagina, tamano)).list();
+            multas = this.multaRepository.find("estado = ?1", estado).page(Page.of(pagina, tamano)).list();
         }
         return multas.stream().map(multa -> {
             ObtenerMultasDto dto = new ObtenerMultasDto();
@@ -90,6 +90,7 @@ public class MultaServices {
             dto.setFoto2(multa.getFoto2());
             dto.setFoto3(multa.getFoto3());
             dto.setPatente(multa.getPatente());
+            dto.setMotivoEliminacion(multa.getDescripcion_desactivada());
             dto.setDireccion(multa.getDireccion());
             if (multa.getTipoMulta() != null) {
                 dto.setTipo_multa(multa.getTipoMulta().getNombre());
@@ -98,6 +99,16 @@ public class MultaServices {
             return dto;
         }).toList();
     }
+
+    public List<ObtenerMultasDto> traeMultas(int pagina, int tamano){
+        return obtenerMultasPorEstado(pagina,tamano,true);
+    }
+
+    public List<ObtenerMultasDto> traeMultasEliminadas(int pagina, int tamano){
+        return obtenerMultasPorEstado(pagina,tamano,false);
+    }
+
+
 
     public List<ObtenerMultasDto> multasPorPatente(String patente, int pagina, int tamanio){
         Object rawComuna = jwt.getClaim("comuna");
@@ -111,7 +122,7 @@ public class MultaServices {
         if (perfilId != 2) {
            multas =  this.multaRepository.find("patente = ?1 and comuna = ?2 and estado = true ORDER BY fecha_creacion DESC", patente.toUpperCase(), comuna).page(Page.of(pagina, tamanio)).list();
         } else {
-            multas = this.multaRepository.find("patente = ?1 estado = ?2 ORDER BY fecha_creacion DESC", patente.toUpperCase(), true).page(Page.of(pagina, tamanio)).list();
+            multas = this.multaRepository.find("patente = ?1 and estado = ?2 ORDER BY fecha_creacion DESC", patente.toUpperCase(), true).page(Page.of(pagina, tamanio)).list();
         }
         return multas.stream().map(m -> {
             ObtenerMultasDto obMultas = new ObtenerMultasDto();
@@ -149,6 +160,8 @@ public class MultaServices {
         this.multaRepository.persist(multa);
         return Map.of("message", "Multa Eliminada con exito");
     }
+
+
 
 
 }

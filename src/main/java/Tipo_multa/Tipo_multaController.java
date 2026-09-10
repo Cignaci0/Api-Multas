@@ -1,6 +1,6 @@
 package Tipo_multa;
 
-import Tipo_multa.DTO.ObtenerMenuTipoMultasDto;
+import Tipo_multa.DTO.ObtenerTipoMultas;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -19,19 +19,14 @@ public class Tipo_multaController {
     @Inject
     Tipo_multaServices tipoMultaServices;
 
-    @POST
-    @RolesAllowed({"SUPERADMIN"})
-    public Response crearTipoMulta(Tipo_multa tipoMulta){
-        Map<String, String> respuesta = tipoMultaServices.crearTipoMulta(tipoMulta);
-        return Response.status(Response.Status.CREATED).entity(respuesta).build();
-    }
-
     @GET
-    @Path("/menu")
-    @RolesAllowed({"SUPERADMIN", "ADMIN", "EMPLEADO"})
-    public Response obtenerMenu() {
-        List<ObtenerMenuTipoMultasDto> respuesta = tipoMultaServices.traerMenu();
-        return Response.ok(respuesta).build();
+    public Response traerTiposMultas(
+        @QueryParam("pagina") @DefaultValue("0") int pagina,
+        @QueryParam("tamanio") @DefaultValue("10") int tamanio,
+        @QueryParam("query")@DefaultValue("") String query){
+
+        List<ObtenerTipoMultas> listaTipoMultas = tipoMultaServices.obtenerTipoMulta(query,pagina,tamanio);
+        return Response.ok(listaTipoMultas).build();
     }
 
 }

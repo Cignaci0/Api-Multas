@@ -31,7 +31,7 @@ public class ModuloController {
 
     @GET
     @Path("/menu")
-    @RolesAllowed({"SUPERADMIN", "ADMIN", "EMPLEADO"})
+    @RolesAllowed({"SUPERADMIN", "ADMIN", "USUARIO"})
     public Response menu(){
         List<ObtenerModulosPorPerfilDto> listaModulos = moduloServices.obtenerModulos();
         return Response.ok(listaModulos).build();

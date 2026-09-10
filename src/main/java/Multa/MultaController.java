@@ -24,7 +24,7 @@ public class MultaController {
     MultaServices multaServices;
 
     @POST
-    @RolesAllowed({"EMPLEADO"})
+    @RolesAllowed({"USUARIO"})
     public Response crearMulta(CrearMultaDto multaBody) {
         Map<String, String> respuesta = multaServices.crearMulta(multaBody);
         return Response.status(Response.Status.CREATED).entity(respuesta).build();
@@ -32,6 +32,7 @@ public class MultaController {
 
     @PATCH
     @Path("/borrar/{idMulta}")
+    @RolesAllowed({"SUPERADMIN", "ADMIN"})
     public Response borrarMulta(@PathParam("idMulta") Integer idMulta, BorrasMultaDto borrasMultaDto) {
         Map<String, String> respuesta = multaServices.borrarMulta(idMulta, borrasMultaDto);
         return Response.status(Response.Status.OK).entity(respuesta).build();
@@ -53,6 +54,17 @@ public class MultaController {
             @QueryParam("tamanio") @DefaultValue("10") int tamanio) {
 
         List<ObtenerMultasDto> listaMultas = multaServices.traeMultas(pagina, tamanio);
+        return Response.ok(listaMultas).build();
+    }
+
+    @GET
+    @Path("/eliminadas")
+    @RolesAllowed({"SUPERADMIN", "ADMIN", "EMPLEADO"})
+    public Response obtenerMultasEliminadas(
+            @QueryParam("pagina") @DefaultValue("0") int pagina,
+            @QueryParam("tamanio") @DefaultValue("10") int tamanio) {
+
+        List<ObtenerMultasDto> listaMultas = multaServices.traeMultasEliminadas(pagina, tamanio);
         return Response.ok(listaMultas).build();
     }
 

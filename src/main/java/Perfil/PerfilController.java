@@ -22,7 +22,7 @@ public class PerfilController {
     PerfilServices perfilServices;
 
     @GET
-    @RolesAllowed({"SUPERADMIN", "ADMIN", "EMPLEADO"})
+    @RolesAllowed({"SUPERADMIN", "ADMIN", "USUARIO"})
     public Response obtenerPerfiles(){
         List<ObtenerPerfilesDto> perfiles = perfilServices.obtenerPerfiles();
         return Response.ok(perfiles).build();
