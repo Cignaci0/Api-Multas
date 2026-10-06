@@ -1,6 +1,7 @@
 package Multa;
 
 
+import Inspector.Inspector;
 import Multa.DTO.BorrasMultaDto;
 import Multa.DTO.CrearMultaDto;
 import Multa.DTO.EditMultasDto;
@@ -16,17 +17,23 @@ import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import   Usuario.UsuarioRepository;
 import io.quarkus.panache.common.Page;
+import Inspector.InspectorRepository;
 
 import java.time.LocalDateTime;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class MultaServices {
 
     @Inject
     MultaRepository multaRepository;
+
+    @Inject
+    InspectorRepository inspectorRepository;
 
     @Inject
     JsonWebToken jwt;
@@ -63,6 +70,7 @@ public class MultaServices {
             Tipo_multa tipoMulta = this.tipoMultaRepository.findByIdOptional(crearMultaDto.getTipo_multa()).orElseThrow(() -> new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "No se encotro el tipo de multa")).build()));
             multa.setTipoMulta(tipoMulta);
         }
+        multa.setCortesia(crearMultaDto.getCortesia());
         this.multaRepository.persist(multa);
 
         return Map.of("message", "Multa creada con exito");
@@ -77,13 +85,23 @@ public class MultaServices {
 
         List<Multa> multas;
         if (perfilId != 2) {
-            multas = this.multaRepository.find("comuna = ?1 and estado = ?2", comuna, estado).page(Page.of(pagina, tamano)).list();
+            multas = this.multaRepository.find("comuna = ?1 and estado = ?2 ORDER BY fecha_creacion DESC", comuna, estado).page(Page.of(pagina, tamano)).list();
         } else {
-            multas = this.multaRepository.find("estado = ?1", estado).page(Page.of(pagina, tamano)).list();
+            multas = this.multaRepository.find("estado = ?1 ORDER BY fecha_creacion DESC", estado).page(Page.of(pagina, tamano)).list();
         }
+        if(multas.isEmpty()){
+            return List.of();
+        }
+        //distinc elimina los elementos repetidos
+        List<Usuario> usuarios = multas.stream().map(Multa::getUsuario).distinct().toList();
+        List<Inspector> inspectores = inspectorRepository.find("usuario in ?1", usuarios).list();
+
+        Map<Integer, String > inpectorMap = inspectores.stream().filter(i -> i.getUsuario() != null).collect(Collectors.toMap(i -> i.getUsuario().getId(), i -> i.getNombre() + " " + i.getApellido()));
+
         return multas.stream().map(multa -> {
             ObtenerMultasDto dto = new ObtenerMultasDto();
             dto.setFecha_creacion(multa.getFecha_creacion());
+            dto.setCortesia(multa.getCortesia());
             dto.setUbicacion(multa.getUbicacion());
             dto.setFoto1(multa.getFoto1());
             dto.setId(multa.getId());
@@ -92,6 +110,9 @@ public class MultaServices {
             dto.setPatente(multa.getPatente());
             dto.setMotivoEliminacion(multa.getDescripcion_desactivada());
             dto.setDireccion(multa.getDireccion());
+            if(multa.getUsuario() != null){
+                dto.setInspector(inpectorMap.get(multa.getUsuario().getId()));
+            }
             if (multa.getTipoMulta() != null) {
                 dto.setTipo_multa(multa.getTipoMulta().getNombre());
                 dto.setIdTipoMulta(multa.getTipoMulta().getId());
@@ -110,7 +131,7 @@ public class MultaServices {
 
 
 
-    public List<ObtenerMultasDto> multasPorPatente(String patente, int pagina, int tamanio){
+    public List<ObtenerMultasDto> multasPorPatente(String patente, int pagina, int tamanio, Boolean estado){
         Object rawComuna = jwt.getClaim("comuna");
         String comuna = rawComuna != null ? rawComuna.toString() : null;
 
@@ -120,10 +141,16 @@ public class MultaServices {
         List<Multa> multas;
 
         if (perfilId != 2) {
-           multas =  this.multaRepository.find("patente = ?1 and comuna = ?2 and estado = true ORDER BY fecha_creacion DESC", patente.toUpperCase(), comuna).page(Page.of(pagina, tamanio)).list();
+           multas =  this.multaRepository.find("patente = ?1 and comuna = ?2 and estado = ?3 ORDER BY fecha_creacion DESC", patente.toUpperCase(), comuna, estado).page(Page.of(pagina, tamanio)).list();
         } else {
-            multas = this.multaRepository.find("patente = ?1 and estado = ?2 ORDER BY fecha_creacion DESC", patente.toUpperCase(), true).page(Page.of(pagina, tamanio)).list();
+            multas = this.multaRepository.find("patente = ?1 and estado = ?2 ORDER BY fecha_creacion DESC", patente.toUpperCase(), estado).page(Page.of(pagina, tamanio)).list();
         }
+
+        List<Usuario> usuarios = multas.stream().map(Multa::getUsuario).distinct().toList();
+        List<Inspector> inspectores = inspectorRepository.find("usuario in ?1", usuarios).list();
+        Map<Integer, String > inpectorMap = inspectores.stream().filter(i -> i.getUsuario() != null).collect(Collectors.toMap(i -> i.getUsuario().getId(), i -> i.getNombre() + " " + i.getApellido()));
+
+
         return multas.stream().map(m -> {
             ObtenerMultasDto obMultas = new ObtenerMultasDto();
             obMultas.setFecha_creacion(m.getFecha_creacion());
@@ -135,10 +162,24 @@ public class MultaServices {
             obMultas.setUbicacion(m.getUbicacion());
             obMultas.setPatente(m.getPatente());
             obMultas.setDireccion(m.getDireccion());
+            obMultas.setMotivoEliminacion(m.getDescripcion_desactivada());
+            obMultas.setCortesia(m.getCortesia());
+            if(m.getUsuario() != null){
+                obMultas.setInspector(inpectorMap.get(m.getUsuario().getId()));
+            }
             obMultas.setTipo_multa(m.getTipoMulta().getNombre());
             return obMultas;
         }).toList();
     }
+
+    public List<ObtenerMultasDto> traeMultasPorPatente(String patente, int pagina, int tamanio){
+        return multasPorPatente(patente, pagina,tamanio,true);
+    }
+
+    public List<ObtenerMultasDto> traeMultasEliminadasPorPatente(String patente, int pagina, int tamanio){
+        return multasPorPatente(patente, pagina,tamanio,false);
+    }
+
 
     @Transactional
     public Map<String, String> ediatMulta(Integer idMulta, EditMultasDto editm){

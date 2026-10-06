@@ -16,4 +16,5 @@ public class CrearMultaDto {
     private Double longitud;
     private String direccion;
     private String comuna;
+    private Boolean cortesia;
 }

@@ -76,7 +76,19 @@ public class MultaController {
             @QueryParam("pagina") @DefaultValue("0") int pagina,
             @QueryParam("tamanio") @DefaultValue("10") int tamanio) {
 
-        List<ObtenerMultasDto> listaMultas = multaServices.multasPorPatente(patente, pagina, tamanio);
+        List<ObtenerMultasDto> listaMultas = multaServices.traeMultasPorPatente(patente, pagina, tamanio);
+        return Response.ok(listaMultas).build();
+    }
+
+    @GET
+    @Path("/eliminadas/{patente}")
+    @RolesAllowed({"SUPERADMIN", "ADMIN", "EMPLEADO"})
+    public Response obtenerMultasPorPatenteEliminadas(
+            @PathParam("patente") String patente,
+            @QueryParam("pagina") @DefaultValue("0") int pagina,
+            @QueryParam("tamanio") @DefaultValue("10") int tamanio) {
+
+        List<ObtenerMultasDto> listaMultas = multaServices.traeMultasEliminadasPorPatente(patente, pagina, tamanio);
         return Response.ok(listaMultas).build();
     }
 }

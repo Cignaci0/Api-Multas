@@ -23,5 +23,4 @@ public class Inspector {
     @OneToOne
     @JoinColumn(name = "id_usuario", nullable = true)
     private Usuario usuario;
-
 }

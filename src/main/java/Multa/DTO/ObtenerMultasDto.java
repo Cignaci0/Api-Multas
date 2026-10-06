@@ -20,5 +20,7 @@ public class ObtenerMultasDto {
     private String direccion;
     private Integer idTipoMulta;
     private String motivoEliminacion;
+    private String inspector;
+    private Boolean cortesia;
 
 }

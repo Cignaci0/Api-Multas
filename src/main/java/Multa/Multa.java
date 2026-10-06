@@ -29,6 +29,7 @@ public class Multa {
     private String direccion;
     private String comuna;
     private Boolean estado = true;
+    private Boolean cortesia = false;
     private String descripcion_desactivada;
 
     @ManyToOne
