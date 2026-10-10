@@ -3,7 +3,6 @@ package Inspector;
 
 import Inspector.DTO.EditInspectorDto;
 import Inspector.DTO.ObtenerInspectorDto;
-import Usuario.Usuario;
 import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -71,4 +70,6 @@ public class InspectorServices {
         this.inspectorRepository.persist(inspector);
         return Map.of("message", "Inspector actualizado con éxito");
     }
+
+
 }

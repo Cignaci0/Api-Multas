@@ -31,6 +31,7 @@ public class Multa {
     private Boolean estado = true;
     private Boolean cortesia = false;
     private String descripcion_desactivada;
+    private Boolean pagado = false;
 
     @ManyToOne
     @JoinColumn(name = "id_usuario_creador", nullable = false)

@@ -22,5 +22,6 @@ public class ObtenerMultasDto {
     private String motivoEliminacion;
     private String inspector;
     private Boolean cortesia;
+    private Boolean pagado;
 
 }

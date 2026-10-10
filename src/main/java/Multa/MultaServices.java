@@ -2,10 +2,7 @@ package Multa;
 
 
 import Inspector.Inspector;
-import Multa.DTO.BorrasMultaDto;
-import Multa.DTO.CrearMultaDto;
-import Multa.DTO.EditMultasDto;
-import Multa.DTO.ObtenerMultasDto;
+import Multa.DTO.*;
 import Tipo_multa.Tipo_multa;
 import Tipo_multa.Tipo_multaRepository;
 import Usuario.Usuario;
@@ -19,11 +16,12 @@ import   Usuario.UsuarioRepository;
 import io.quarkus.panache.common.Page;
 import Inspector.InspectorRepository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -106,6 +104,7 @@ public class MultaServices {
             dto.setFoto1(multa.getFoto1());
             dto.setId(multa.getId());
             dto.setFoto2(multa.getFoto2());
+            dto.setPagado(multa.getPagado());
             dto.setFoto3(multa.getFoto3());
             dto.setPatente(multa.getPatente());
             dto.setMotivoEliminacion(multa.getDescripcion_desactivada());
@@ -161,6 +160,7 @@ public class MultaServices {
             obMultas.setIdTipoMulta(m.getTipoMulta().getId());
             obMultas.setUbicacion(m.getUbicacion());
             obMultas.setPatente(m.getPatente());
+            obMultas.setPagado(m.getPagado());
             obMultas.setDireccion(m.getDireccion());
             obMultas.setMotivoEliminacion(m.getDescripcion_desactivada());
             obMultas.setCortesia(m.getCortesia());
@@ -188,6 +188,9 @@ public class MultaServices {
             Tipo_multa tipoMulta = this.tipoMultaRepository.findByIdOptional(editm.getIdTipoMulta()).orElseThrow(() -> new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "No se encontro el tipo de multa")).build()));
             multa.setTipoMulta(tipoMulta);
         }
+        if(editm.getPagada() != null){
+            multa.setPagado(editm.getPagada());
+        }
         multaMapper.editarMulrta(editm, multa);
         this.multaRepository.persist(multa);
         return Map.of("message", "Multa actualizada con éxito");
@@ -200,6 +203,46 @@ public class MultaServices {
         multa.setEstado(borrasMultaDto.getEstado());
         this.multaRepository.persist(multa);
         return Map.of("message", "Multa Eliminada con exito");
+    }
+
+    public List<ObtenerMultasPorInspoectores> obtenerMultasPorInspectores(LocalDate fechaInicio, LocalDate fechaFin){
+        Object rawComuna = jwt.getClaim("comuna");
+        String comuna = rawComuna != null ? rawComuna.toString() : null;
+
+        Object rawId = jwt.getClaim("id_perfil");
+        Integer perfilId = rawId != null ? Integer.valueOf(rawId.toString()) : null;
+
+        List<Multa> multas;
+
+        if (perfilId != 2) {
+            multas = this.multaRepository.find("comuna = ?1 and estado = true AND fecha_creacion BETWEEN ?2 AND ?3 ORDER BY fecha_creacion DESC", comuna, fechaInicio.atStartOfDay(), fechaFin.atTime(LocalTime.MAX)).list();
+        } else {
+            multas = this.multaRepository.find("estado = true AND fecha_creacion BETWEEN ?1 AND ?2 ORDER BY fecha_creacion DESC", fechaInicio.atStartOfDay(), fechaFin.atTime(LocalTime.MAX)).list();
+        }
+
+        // Agrupar por inspector y contar multas
+        Map<String, Long> multasPorInspector = multas.stream()
+            .filter(m -> m.getUsuario() != null)
+            .collect(Collectors.groupingBy(
+                m -> {
+                    List<Inspector> inspectores = inspectorRepository.find("usuario = ?1", m.getUsuario()).list();
+                    if (!inspectores.isEmpty()) {
+                        Inspector inspector = inspectores.get(0);
+                        return inspector.getNombre() + " " + inspector.getApellido();
+                    }
+                    return m.getUsuario().getUsername();
+                },
+                Collectors.counting()
+            ));
+
+        return multasPorInspector.entrySet().stream()
+            .map(entry -> {
+                ObtenerMultasPorInspoectores dto = new ObtenerMultasPorInspoectores();
+                dto.nombreInpector = entry.getKey();
+                dto.multasRealizadas = entry.getValue().intValue();
+                return dto;
+            })
+            .toList();
     }
 
 

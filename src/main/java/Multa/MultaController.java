@@ -5,12 +5,14 @@ import Multa.DTO.BorrasMultaDto;
 import Multa.DTO.CrearMultaDto;
 import Multa.DTO.EditMultasDto;
 import Multa.DTO.ObtenerMultasDto;
+import Multa.DTO.ObtenerMultasPorInspoectores;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -89,6 +91,17 @@ public class MultaController {
             @QueryParam("tamanio") @DefaultValue("10") int tamanio) {
 
         List<ObtenerMultasDto> listaMultas = multaServices.traeMultasEliminadasPorPatente(patente, pagina, tamanio);
+        return Response.ok(listaMultas).build();
+    }
+
+    @GET
+    @Path("/inspectores")
+    @RolesAllowed({"SUPERADMIN", "ADMIN", "EMPLEADO"})
+    public Response obtenerMultasPorInspectores(
+            @QueryParam("fechaInicio") LocalDate fechaInicio,
+            @QueryParam("fechaFin") LocalDate fechaFin) {
+
+        List<ObtenerMultasPorInspoectores> listaMultas = multaServices.obtenerMultasPorInspectores(fechaInicio, fechaFin);
         return Response.ok(listaMultas).build();
     }
 }

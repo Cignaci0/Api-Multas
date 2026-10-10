@@ -9,4 +9,5 @@ public class EditMultasDto {
     private Integer idTipoMulta;
     private String patente;
     private String direccion;
+    private Boolean pagada;
 }
