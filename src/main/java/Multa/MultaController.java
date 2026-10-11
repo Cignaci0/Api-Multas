@@ -5,7 +5,6 @@ import Multa.DTO.BorrasMultaDto;
 import Multa.DTO.CrearMultaDto;
 import Multa.DTO.EditMultasDto;
 import Multa.DTO.ObtenerMultasDto;
-import Multa.DTO.ObtenerMultasPorInspoectores;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -94,14 +93,4 @@ public class MultaController {
         return Response.ok(listaMultas).build();
     }
 
-    @GET
-    @Path("/inspectores")
-    @RolesAllowed({"SUPERADMIN", "ADMIN", "EMPLEADO"})
-    public Response obtenerMultasPorInspectores(
-            @QueryParam("fechaInicio") LocalDate fechaInicio,
-            @QueryParam("fechaFin") LocalDate fechaFin) {
-
-        List<ObtenerMultasPorInspoectores> listaMultas = multaServices.obtenerMultasPorInspectores(fechaInicio, fechaFin);
-        return Response.ok(listaMultas).build();
-    }
 }

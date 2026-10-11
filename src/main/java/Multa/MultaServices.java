@@ -205,45 +205,7 @@ public class MultaServices {
         return Map.of("message", "Multa Eliminada con exito");
     }
 
-    public List<ObtenerMultasPorInspoectores> obtenerMultasPorInspectores(LocalDate fechaInicio, LocalDate fechaFin){
-        Object rawComuna = jwt.getClaim("comuna");
-        String comuna = rawComuna != null ? rawComuna.toString() : null;
 
-        Object rawId = jwt.getClaim("id_perfil");
-        Integer perfilId = rawId != null ? Integer.valueOf(rawId.toString()) : null;
-
-        List<Multa> multas;
-
-        if (perfilId != 2) {
-            multas = this.multaRepository.find("comuna = ?1 and estado = true AND fecha_creacion BETWEEN ?2 AND ?3 ORDER BY fecha_creacion DESC", comuna, fechaInicio.atStartOfDay(), fechaFin.atTime(LocalTime.MAX)).list();
-        } else {
-            multas = this.multaRepository.find("estado = true AND fecha_creacion BETWEEN ?1 AND ?2 ORDER BY fecha_creacion DESC", fechaInicio.atStartOfDay(), fechaFin.atTime(LocalTime.MAX)).list();
-        }
-
-        // Agrupar por inspector y contar multas
-        Map<String, Long> multasPorInspector = multas.stream()
-            .filter(m -> m.getUsuario() != null)
-            .collect(Collectors.groupingBy(
-                m -> {
-                    List<Inspector> inspectores = inspectorRepository.find("usuario = ?1", m.getUsuario()).list();
-                    if (!inspectores.isEmpty()) {
-                        Inspector inspector = inspectores.get(0);
-                        return inspector.getNombre() + " " + inspector.getApellido();
-                    }
-                    return m.getUsuario().getUsername();
-                },
-                Collectors.counting()
-            ));
-
-        return multasPorInspector.entrySet().stream()
-            .map(entry -> {
-                ObtenerMultasPorInspoectores dto = new ObtenerMultasPorInspoectores();
-                dto.nombreInpector = entry.getKey();
-                dto.multasRealizadas = entry.getValue().intValue();
-                return dto;
-            })
-            .toList();
-    }
 
 
 

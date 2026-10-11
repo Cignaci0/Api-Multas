@@ -1,8 +1,12 @@
 package Inspector;
 
 
+import Inspector.DTO.AsignarZonasDto;
 import Inspector.DTO.EditInspectorDto;
 import Inspector.DTO.ObtenerInspectorDto;
+import Inspector.DTO.ZonaAsignadaDto;
+import Zonas.Zonas;
+import Zonas.Zonasrepository;
 import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -14,12 +18,19 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class InspectorServices {
 
     @Inject
     InspectorRepository inspectorRepository;
+
+    @Inject
+    InspectorZonasRepository inspectorZonasRepository;
+
+    @Inject
+    Zonasrepository zonasRepository;
 
     @Inject
     JsonWebToken jwt;
@@ -71,5 +82,38 @@ public class InspectorServices {
         return Map.of("message", "Inspector actualizado con éxito");
     }
 
+    @Transactional
+    public Map<String, String> asignarZonas(AsignarZonasDto asignarZonasDto) {
+        Inspector inspector = this.inspectorRepository.findByIdOptional(asignarZonasDto.getInspectorId())
+            .orElseThrow(() -> new NotFoundException(Response.status(Response.Status.NOT_FOUND)
+                .entity(Map.of("error", "Inspector no encontrado")).build()));
+
+        // Eliminar asignaciones existentes
+        this.inspectorZonasRepository.delete("inspector.id", inspector.getId());
+
+        // Crear nuevas asignaciones
+        for (Integer zonaId : asignarZonasDto.getZonaIds()) {
+            Zonas zona = this.zonasRepository.findByIdOptional(zonaId)
+                .orElseThrow(() -> new NotFoundException(Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("error", "Zona no encontrada")).build()));
+            InspectorZonas iz = new InspectorZonas();
+            iz.setInspector(inspector);
+            iz.setZona(zona);
+            this.inspectorZonasRepository.persist(iz);
+        }
+
+        return Map.of("message", "Zonas asignadas correctamente");
+    }
+
+    public List<ZonaAsignadaDto> obtenerZonasPorInspector(Integer inspectorId) {
+        return this.inspectorZonasRepository.findByInspector(inspectorId).stream().map(iz -> {
+            ZonaAsignadaDto dto = new ZonaAsignadaDto();
+            dto.setId(iz.getZona().getId());
+            dto.setNombreZona(iz.getZona().getNombre());
+            dto.setIdComuna(iz.getZona().getComuna().getId());
+            dto.setNombreComuna(iz.getZona().getComuna().getNombre());
+            return dto;
+        }).collect(Collectors.toList());
+    }
 
 }

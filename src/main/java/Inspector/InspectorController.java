@@ -1,8 +1,10 @@
 package Inspector;
 
 
+import Inspector.DTO.AsignarZonasDto;
 import Inspector.DTO.EditInspectorDto;
 import Inspector.DTO.ObtenerInspectorDto;
+import Inspector.DTO.ZonaAsignadaDto;
 import Multa.DTO.ObtenerMultasDto;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -38,6 +40,23 @@ public class InspectorController {
     public Response editInspector(@PathParam("idInspector") Integer idInspector, EditInspectorDto editInspectorDto){
         Map<String, String> respuesta = inspectorServices.editIsnpector(idInspector, editInspectorDto);
         return Response.status(Response.Status.OK).entity(respuesta).build();
+    }
+
+    @POST
+    @RolesAllowed({"SUPERADMIN", "ADMIN"})
+    @Path("/{idInspector}/zonas")
+    public Response asignarZonas(@PathParam("idInspector") Integer idInspector, AsignarZonasDto asignarZonasDto){
+        asignarZonasDto.setInspectorId(idInspector);
+        Map<String, String> respuesta = inspectorServices.asignarZonas(asignarZonasDto);
+        return Response.status(Response.Status.OK).entity(respuesta).build();
+    }
+
+    @GET
+    @RolesAllowed({"SUPERADMIN", "ADMIN"})
+    @Path("/{idInspector}/zonas")
+    public Response obtenerZonasPorInspector(@PathParam("idInspector") Integer idInspector){
+        List<ZonaAsignadaDto> zonas = inspectorServices.obtenerZonasPorInspector(idInspector);
+        return Response.ok(zonas).build();
     }
 
 }
